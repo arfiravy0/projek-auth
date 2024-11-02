@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
+
 
 class AuthController extends Controller
 {
@@ -38,10 +42,63 @@ class AuthController extends Controller
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
-        $token = $user->createToken($request->device_name)->plainTextToken;
-        return respon ()->json ([
+        $token = $user->createToken($request->device_name ?? 'defaultDeviceName')->plainTextToken;
+        return response ()->json ([
             'token' => $token
         ], 200);
 
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+
+        if ($user instanceof User) {
+            $user->save();
+        } else {
+            return response()->json(['message' => 'User is not an instance of User'], 500);
+        }
+
+        return response()->json(['message' => 'Profile updated successfully', 'user' => $user], 200);
+    }
+
+    public function deleteUser(Request $request, $id)
+    {
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+
+        if ($user->id === Auth::id()) {
+            return response()->json(['message' => 'You cannot delete your own account'], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully'], 200);
+    }
+
+    public function getAllUsers()
+    {
+        // Ambil semua pengguna dari database
+        $users = User::all();
+
+        return response()->json(['users' => $users], 200);
     }
 }
