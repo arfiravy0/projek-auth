@@ -1,6 +1,6 @@
 PRAKTIKUM
-![1 register](image-2.png)
-![2 login](image-3.png)
+![Register](image-2.png)
+![Login](image-3.png)
 ![Akses Rute Admin](image-4.png)
 
 EVALUASI
